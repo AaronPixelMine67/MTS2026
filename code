@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Malaysia Train Simulator 2026</title>
+<style>
+  html,body{margin:0;overflow:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif; user-select: none;}
+  
+  /* ============ GAME UI ============ */
+  #hud{position:fixed;top:12px;left:12px;color:#fff;text-shadow:2px 2px 4px #000;z-index:10;font-size:15px;line-height:1.5;pointer-events:none}
+  #hud-speed{font-size:34px;font-weight:bold;color:#aaffaa}
+  #hud-station{color:#ffeb3b;font-weight:bold}
+  #hud-next{color:#4fc3f7;font-weight:bold}
+  #hud-view{color:#ff9800;font-weight:bold}
+  #hud-time{color:#fff;font-weight:bold;font-family:monospace;font-size:18px;margin-bottom:5px}
+  #announce{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);color:#fff;text-align:center;text-shadow:2px 2px 6px #000;z-index:10;font-size:22px;max-width:92%;line-height:1.5;pointer-events:none;background:rgba(0,0,0,0.6);padding:10px 20px;border-radius:10px}
+  #announce-bm{color:#4fc3f7;font-weight:bold}
+  #controls{position:fixed;bottom:10px;left:12px;color:#fff;text-shadow:1px 1px 3px #000;font-size:12px;z-index:10;opacity:.85}
+  #progress-container{position:fixed;bottom:10px;right:12px;width:320px;z-index:10}
+  #progress-bar{height:10px;background:rgba(0,0,0,.4);border-radius:5px;overflow:hidden;border:1px solid #fff}
+  #progress-fill{height:100%;background:#00A650;width:0%;transition:width .3s}
+  #progress-label{color:#fff;text-shadow:1px 1px 3px #000;font-size:11px;margin-top:4px;text-align:center}
+
+  /* ============ MAIN MENU ============ */
+  #main-menu {
+    position: fixed; inset: 0; background: linear-gradient(135deg, #0d1b2a, #1b263b);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    z-index: 1000; color: #fff; transition: opacity 0.5s ease;
+  }
+  #main-menu h1 { font-size: 42px; margin: 0 0 10px; color: #fff; letter-spacing: 2px; text-align: center; text-shadow: 0 4px 15px rgba(255,255,255,0.2); }
+  #main-menu h2 { font-size: 18px; margin: 0 0 30px; color: #aaa; font-weight: 400; text-align: center;}
+  
+  .menu-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    padding: 30px 50px; border-radius: 15px; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 450px;
+  }
+
+  .setting-row { margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+  .setting-label { font-size: 14px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  
+  .toggle-group { display: flex; gap: 10px; width: 100%; justify-content: center; }
+  .toggle-btn {
+    flex: 1; padding: 12px 10px; border-radius: 8px; border: 2px solid #444;
+    background: transparent; color: #ccc; font-size: 15px; cursor: pointer;
+    transition: all 0.2s ease; font-weight: bold;
+  }
+  .toggle-btn:hover { border-color: #888; color: #fff; }
+  
+  #btn-route-kajang.active { border-color: #00A650; background: rgba(0,166,80,0.2); color: #00A650; }
+  #btn-route-putrajaya.active { border-color: #FFCC00; background: rgba(255,204,0,0.2); color: #FFCC00; }
+  #btn-lang-ms.active, #btn-lang-en.active { border-color: #4fc3f7; background: rgba(79,195,247,0.2); color: #4fc3f7; }
+
+  #start-btn {
+    width: 100%; padding: 15px; border: none; border-radius: 30px;
+    font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+    margin-top: 15px; color: #fff; background: #00A650; box-shadow: 0 4px 15px rgba(0,166,80,0.4);
+  }
+  #start-btn:hover { transform: scale(1.02); filter: brightness(1.1); }
+  #start-btn:active { transform: scale(0.98); }
+
+  .controls-info { margin-top: 25px; font-size: 12px; color: #666; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- ============ MAIN MENU ============ -->
+<div id="main-menu">
+  <h1>Malaysia Train Simulator 2026</h1>
+  <h2>Select Route & Language</h2>
+  
+  <div class="menu-card">
+    <div class="setting-row">
+      <div class="setting-label">Pilih Laluan / Select Route</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btn-route-kajang" onclick="setRoute('kajang')">MRT Laluan Kajang</button>
+        <button class="toggle-btn" id="btn-route-putrajaya" onclick="setRoute('putrajaya')">MRT Laluan Putrajaya</button>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">Pilih Bahasa / Select Language</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btn-lang-ms" onclick="setLanguage('ms')">Bahasa Melayu</button>
+        <button class="toggle-btn" id="btn-lang-en" onclick="setLanguage('en')">English</button>
+      </div>
+    </div>
+    
+    <button id="start-btn" onclick="startGame()">▶ START SIMULATOR</button>
+    
+    <div class="controls-info">
+      W/↑ Accelerate · S/↓ Brake · T Auto/Manual · C Camera<br>
+      Space Skip Door Wait
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME HUD ============ -->
+<div id="hud" style="display:none;">
+  <div id="hud-time">08:00 AM</div>
+  <div id="hud-speed">0 km/j</div>
+  <div id="hud-station">Di: -</div>
+  <div id="hud-next">Seterusnya: -</div>
+  <div id="hud-passengers">Penumpang: 0</div>
+  <div id="hud-mode">Mod: AUTO · T</div>
+  <div id="hud-view">Pandangan: CHASE · C</div>
+</div>
+<div id="announce" style="display:none;"><div id="announce-bm"></div></div>
+<div id="controls" style="display:none;">W/↑ pecut · S/↓ brek · T auto · C kamera · Space langkau</div>
+<div id="progress-container" style="display:none;">
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <div id="progress-label">Line</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============ ROUTE CONFIGURATION ============
+const ROUTES = {
+  kajang: {
+    name: "MRT Laluan Kajang",
+    colorHex: '#00A650',
+    colorDec: 0x00A650,
+    numCarriages: 4,
+    stations: [
+      { name:"Kajang", inter:"KTM Komuter", type:"interchange" },
+      { name:"Stadium Kajang", inter:"", type:"elevated" },
+      { name:"Sungai Jernih", inter:"", type:"elevated" },
+      { name:"Bukit Dukung", inter:"", type:"elevated" },
+      { name:"Batu 11 Cheras", inter:"", type:"elevated" },
+      { name:"Bandar Tun Hussein Onn", inter:"", type:"elevated" },
+      { name:"Sri Raya", inter:"", type:"elevated" },
+      { name:"Taman Suntex", inter:"", type:"elevated" },
+      { name:"Taman Connaught", inter:"", type:"elevated" },
+      { name:"Taman Mutiara", inter:"", type:"elevated" },
+      { name:"Taman Midah", inter:"", type:"elevated" },
+      { name:"Taman Pertama", inter:"", type:"elevated" },
+      { name:"Maluri", inter:"LRT Ampang Line & LRT Sri Petaling Line", type:"interchange" },
+      { name:"Cochrane", inter:"", type:"elevated" },
+      { name:"Tun Razak Exchange", inter:"MRT Putrajaya Line", type:"underground" },
+      { name:"Bukit Bintang", inter:"KL Monorail", type:"underground" },
+      { name:"Merdeka", inter:"", type:"underground" },
+      { name:"Pasar Seni", inter:"LRT Kelana Jaya Line & KTM Komuter", type:"underground" },
+      { name:"Muzium Negara", inter:"KLIA Ekspres & KLIA Transit", type:"underground" },
+      { name:"Semantan", inter:"", type:"elevated" },
+      { name:"Pusat Bandar Damansara", inter:"", type:"elevated" },
+      { name:"Phileo Damansara", inter:"", type:"elevated" },
+      { name:"TTDI", inter:"", type:"elevated" },
+      { name:"Bandar Utama", inter:"", type:"interchange" },
+      { name:"Mutiara Damansara", inter:"", type:"elevated" },
+      { name:"Surian", inter:"", type:"elevated" },
+      { name:"Kota Damansara", inter:"", type:"elevated" },
+      { name:"Kwasa Sentral", inter:"", type:"elevated" },
+      { name:"Kwasa Damansara", inter:"MRT Putrajaya Line", type:"interchange" },
+      { name:"Kampung Selamat", inter:"", type:"elevated" },
+      { name:"Sungai Buloh", inter:"KTM Komuter", type:"elevated" }
+    ],
+    waypoints: [
+      new THREE.Vector3(0,    12, 0), new THREE.Vector3(4500, 12, 0), new THREE.Vector3(7800, 12, 300),
+      new THREE.Vector3(9000, 12, 2100), new THREE.Vector3(9000, 12, 5400), new THREE.Vector3(9000, 2,  6600), 
+      new THREE.Vector3(9000, 2,  9600), new THREE.Vector3(8400, 2,  10800), new THREE.Vector3(7500, 12, 11400),
+      new THREE.Vector3(3000, 12, 12000), new THREE.Vector3(-1500,12, 11700), new THREE.Vector3(-3000,12, 10500),
+    ]
+  },
+  putrajaya: {
+    name: "MRT Laluan Putrajaya",
+    colorHex: '#FFCC00',
+    colorDec: 0xFFCC00,
+    numCarriages: 6,
+    stations: [
+      { name:"Kwasa Damansara", inter:"MRT Kajang Line", type:"interchange" },
+      { name:"Kampung Selamat", inter:"", type:"elevated" },
+      { name:"Sungai Buloh", inter:"KTM Komuter", type:"elevated" },
+      { name:"Damansara Damai", inter:"", type:"elevated" },
+      { name:"Sri Damansara Barat", inter:"", type:"elevated" },
+      { name:"Sri Damansara Sentral", inter:"", type:"elevated" },
+      { name:"Sri Damansara Timur", inter:"KTM Komuter", type:"interchange" },
+      { name:"Metro Prima", inter:"", type:"elevated" },
+      { name:"Kepong Baru", inter:"", type:"elevated" },
+      { name:"Jinjang", inter:"", type:"elevated" },
+      { name:"Sri Delima", inter:"", type:"elevated" },
+      { name:"Kampung Batu", inter:"KTM Komuter", type:"interchange" },
+      { name:"Jalan Ipoh", inter:"", type:"elevated" },
+      { name:"Sentul Barat", inter:"", type:"elevated" },
+      { name:"Titiwangsa", inter:"LRT Ampang/Sri Petaling Line & KL Monorail", type:"interchange" },
+      { name:"Hospital Kuala Lumpur", inter:"", type:"underground" },
+      { name:"Raja Uda", inter:"", type:"underground" },
+      { name:"Ampang Park", inter:"LRT Kelana Jaya Line", type:"underground" },
+      { name:"Persiaran KLCC", inter:"", type:"underground" },
+      { name:"Conlay", inter:"", type:"underground" },
+      { name:"Tun Razak Exchange", inter:"MRT Kajang Line", type:"underground" },
+      { name:"Chan Sow Lin", inter:"LRT Ampang/Sri Petaling Line", type:"underground" },
+      { name:"Bandar Malaysia Utara", inter:"", type:"elevated" },
+      { name:"Bandar Malaysia Selatan", inter:"", type:"elevated" },
+      { name:"Kuchai", inter:"", type:"elevated" },
+      { name:"Taman Naga Emas", inter:"", type:"elevated" },
+      { name:"Sungai Besi", inter:"LRT Sri Petaling Line", type:"interchange" },
+      { name:"Serdang Raya Utara", inter:"", type:"elevated" },
+      { name:"Serdang Raya Selatan", inter:"", type:"elevated" },
+      { name:"Serdang Jaya", inter:"", type:"elevated" },
+      { name:"UPM", inter:"", type:"elevated" },
+      { name:"Taman Equine", inter:"", type:"elevated" },
+      { name:"Putra Permai", inter:"", type:"elevated" },
+      { name:"16 Sierra", inter:"", type:"elevated" },
+      { name:"Cyberjaya Utara", inter:"", type:"elevated" },
+      { name:"Cyberjaya City Centre", inter:"", type:"elevated" },
+      { name:"Putrajaya Sentral", inter:"ERL KLIA Transit & KTM Komuter", type:"interchange" }
+    ],
+    waypoints: [
+      new THREE.Vector3(0,    12, 0), new THREE.Vector3(4500, 12, 300), new THREE.Vector3(7500, 12, 2400),
+      new THREE.Vector3(7500, 2,  4800), new THREE.Vector3(6000, 2,  8400), new THREE.Vector3(6000, 2,  10200),
+      new THREE.Vector3(4500, 12, 12000), new THREE.Vector3(3000, 12, 15000), new THREE.Vector3(0,    12, 18000),
+      new THREE.Vector3(-3000,12, 19500)
+    ]
+  }
+};
+
+// ============ LANGUAGE & TEXT DICTIONARY ============
+let selectedLanguage = 'ms';
+let selectedRoute = 'kajang';
+
+const TEXTS = {
+  ms: {
+    nextStation: (name, inter) => `Stesen berikutnya, ${name}.` + (inter ? ` Stesen ini adalah stesen pertukaran ke ${inter}.` : ''),
+    arrival: (name, inter) => `Ini adalah stesen, ${name}. Pintu di sebelah kiri akan dibuka.` + (inter ? ` Stesen pertukaran ke ${inter}.` : ''),
+    doorsClosing: `Pintu akan ditutup. Sila jauhkan diri daripada pintu.`,
+    noEating: `Peringatan kepada semua penumpang. Sila jangan makan atau minum di dalam tren.`,
+    newsList: [
+      `Berita terkini. Kesesakan lalu lintas dilaporkan di Lebuhraya PLUS arah Kuala Lumpur.`,
+      `Berita cuaca. Hujan lebat diramalkan di kawasan Lembah Klang pada petang ini.`,
+      `Peringatan. Sila pastikan barang berharga anda sentiasa bersama anda.`,
+      `Berita terkini. Perkhidmatan MRT berjalan lancar setakat ini.`
+    ],
+    hudAt: `Di: `, hudNext: `Seterusnya: `, hudPassengers: `Penumpang: `,
+    hudModeAuto: `Mod: AUTO · T`, hudModeManual: `Mod: MANUAL · T`, hudView: `Pandangan: `,
+    hudDoorsOpen: `Pintu dibuka: `, hudWaitAnnouncement: `Menunggu pengumuman selesai`,
+    hudClosing: `Pintu menutup`, hudTerminal: `Terminal`, hudSeconds: ` saat`
+  },
+  en: {
+    nextStation: (name, inter) => `Next station, ${name}.` + (inter ? ` This is an interchange station to ${inter}.` : ''),
+    arrival: (name, inter) => `This is station, ${name}. Doors on the left will open.` + (inter ? ` Interchange station to ${inter}.` : ''),
+    doorsClosing: `Doors are closing. Please stand clear from the doors.`,
+    noEating: `Reminder to all passengers. Please do not eat or drink inside the train.`,
+    newsList: [
+      `Latest news. Traffic congestion reported on the PLUS Highway towards Kuala Lumpur.`,
+      `Weather update. Heavy rain is expected in the Klang Valley this afternoon.`,
+      `Reminder. Please ensure your valuables are kept with you at all times.`,
+      `Latest news. MRT services are currently running smoothly at this time.`
+    ],
+    hudAt: `At: `, hudNext: `Next: `, hudPassengers: `Passengers: `,
+    hudModeAuto: `Mode: AUTO · T`, hudModeManual: `Mode: MANUAL · T`, hudView: `View: `,
+    hudDoorsOpen: `Doors open: `, hudWaitAnnouncement: `Waiting for announcement`,
+    hudClosing: `Closing doors`, hudTerminal: `Terminal`, hudSeconds: `s`
+  }
+};
+
+// ============ MENU LOGIC ============
+function setLanguage(lang) {
+  selectedLanguage = lang;
+  document.getElementById('btn-lang-ms').classList.toggle('active', lang === 'ms');
+  document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+}
+
+function setRoute(route) {
+  selectedRoute = route;
+  document.getElementById('btn-route-kajang').classList.toggle('active', route === 'kajang');
+  document.getElementById('btn-route-putrajaya').classList.toggle('active', route === 'putrajaya');
+  
+  const btn = document.getElementById('start-btn');
+  if (route === 'putrajaya') {
+    btn.style.background = '#FFCC00'; btn.style.color = '#000'; btn.style.boxShadow = '0 4px 15px rgba(255,204,0,0.4)';
+  } else {
+    btn.style.background = '#00A650'; btn.style.color = '#fff'; btn.style.boxShadow = '0 4px 15px rgba(0,166,80,0.4)';
+  }
+}
+
+let scene, camera, renderer, sun, hemi, ambientLight;
+let curve, CURVE_LEN, STATIONS, STATION_T, N;
+let playerTrainObj, aiTrains = [], stationGroups = [], vehicles = [], groundNPCs = [], interchangeVehicles = [];
+let npcWaiting = [], riders = [];
+let clock;
+const TRACK_OFFSET = 4.5; 
+let lastBoardUpdateIdx = -1;
+let lastBoardUpdateState = '';
+
+// ============ WEATHER & DAY/NIGHT VARIABLES ============
+let timeOfDay = 8.0; // Start at 8 AM
+const TIME_SPEED = 0.05; // 1 real second = 0.05 game hours (24 hours = 8 minutes)
+let isRaining = false;
+let rainTimer = 60.0; // Chance to change weather every 60 seconds
+let rainSystem;
+const RAIN_COUNT = 5000;
+let rainPositions, rainVelocities;
+
+const skyColorDay = new THREE.Color(0xa0c4e8);
+const skyColorNight = new THREE.Color(0x0a0a1a);
+const skyColorDawn = new THREE.Color(0xffaa77);
+const skyColorDusk = new THREE.Color(0xff7744);
+const skyColorRain = new THREE.Color(0x555555);
+let currentSkyColor = new THREE.Color();
+
+function startGame() {
+  document.getElementById('main-menu').style.opacity = '0';
+  setTimeout(() => { document.getElementById('main-menu').style.display = 'none'; }, 500);
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('announce').style.display = 'block';
+  document.getElementById('controls').style.display = 'block';
+  document.getElementById('progress-container').style.display = 'block';
+
+  initSimulation(selectedRoute);
+}
+
+// ============ SIMULATION INITIALIZATION ============
+function initSimulation(routeKey) {
+  const config = ROUTES[routeKey];
+  STATIONS = config.stations;
+  N = STATIONS.length;
+  
+  document.getElementById('hud-mode').textContent = TEXTS[selectedLanguage].hudModeAuto;
+  document.getElementById('progress-label').textContent = config.name;
+  document.getElementById('progress-fill').style.background = config.colorHex;
+  
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xa0c4e8, 1000, 5000);
+  
+  camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 10000);
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  ambientLight = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambientLight);
+  hemi = new THREE.HemisphereLight(0xcfe8ff, 0x4a7c3f, 0.55); scene.add(hemi);
+  
+  sun = new THREE.DirectionalLight(0xfff2d0, 1.0);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024); 
+  Object.assign(sun.shadow.camera,{left:-300,right:300,top:300,bottom:-300,near:1,far:2000});
+  scene.add(sun);
+
+  curve = new THREE.CatmullRomCurve3(config.waypoints, false, 'catmullrom', 0.25);
+  CURVE_LEN = curve.getLength();
+  STATION_T = [];
+  for (let i = 0; i < N; i++) STATION_T.push(i / (N - 1));
+
+  buildEnvironment(config);
+  buildTrains(config);
+  setupCockpit();
+  setupRain();
+  
+  initAudio();
+  const u = new SpeechSynthesisUtterance(''); speechSynthesis.speak(u);
+
+  trainT = 1.5 * CARRIAGE_T_OFFSET; speed = 0; state = 'docked';
+  currentIdx = 0; nextIdx = 1; dockedTimer = 15.0; closingTimer = 0;
+  doorOpen = 0; autoDrive = true; passengerCount = 0; announcementInProgress = false;
+  interchangeVehicles = [];
+  randomAnnouncementTimer = 15.0;
+  clock = new THREE.Clock();
+  lastBoardUpdateIdx = -1;
+  lastBoardUpdateState = '';
+
+  setTimeout(() => {
+    announceArrival(STATIONS[0], 0); playDoorSound(true); 
+    spawnWaitingForStation(0); stationGroups[0]._spawned = true;
+  }, 300);
+
+  animate();
+}
+
+// ============ WEATHER & DAY/NIGHT SYSTEM ============
+function setupRain() {
+  const geo = new THREE.BufferGeometry();
+  rainPositions = new Float32Array(RAIN_COUNT * 3);
+  rainVelocities = new Float32Array(RAIN_COUNT);
+  
+  for (let i = 0; i < RAIN_COUNT; i++) {
+    rainPositions[i * 3] = (Math.random() - 0.5) * 200;
+    rainPositions[i * 3 + 1] = Math.random() * 100;
+    rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+    rainVelocities[i] = 50 + Math.random() * 50;
+  }
+  
+  geo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xaaccff, size: 0.4, transparent: true, opacity: 0.6 });
+  rainSystem = new THREE.Points(geo, mat);
+  rainSystem.visible = false;
+  scene.add(rainSystem);
+}
+
+function updateWeatherAndTime(dt) {
+  // 1. Time Progression
+  timeOfDay += TIME_SPEED * dt;
+  if (timeOfDay >= 24) timeOfDay -= 24;
+  
+  const hours = Math.floor(timeOfDay);
+  const minutes = Math.floor((timeOfDay - hours) * 60);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  document.getElementById('hud-time').textContent = `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+
+  // 2. Weather Toggle
+  rainTimer -= dt;
+  if (rainTimer <= 0) {
+    isRaining = !isRaining;
+    rainTimer = 60 + Math.random() * 60; // Rain lasts 1-2 mins
+    rainSystem.visible = isRaining;
+  }
+
+  // 3. Lighting & Sky Color
+  const angle = (timeOfDay / 24) * Math.PI * 2 - Math.PI / 2; // -PI/2 so sunrise is at 6 AM
+  sun.position.set(Math.cos(angle) * 1000, Math.sin(angle) * 1000, Math.sin(angle * 0.5) * 500);
+  
+  let sunIntensity = Math.max(0, Math.sin(angle)) * 1.2;
+  let ambientIntensity = 0.2 + Math.max(0, Math.sin(angle)) * 0.6;
+  let hemiIntensity = 0.2 + Math.max(0, Math.sin(angle)) * 0.4;
+
+  // Determine base sky color
+  if (timeOfDay >= 6 && timeOfDay < 8) {
+    currentSkyColor.lerpColors(skyColorNight, skyColorDawn, (timeOfDay - 6) / 2);
+  } else if (timeOfDay >= 8 && timeOfDay < 17) {
+    currentSkyColor.lerpColors(skyColorDawn, skyColorDay, Math.min(1, (timeOfDay - 8) / 2));
+  } else if (timeOfDay >= 17 && timeOfDay < 19) {
+    currentSkyColor.lerpColors(skyColorDay, skyColorDusk, (timeOfDay - 17) / 2);
+  } else if (timeOfDay >= 19 && timeOfDay < 21) {
+    currentSkyColor.lerpColors(skyColorDusk, skyColorNight, (timeOfDay - 19) / 2);
+  } else {
+    currentSkyColor.copy(skyColorNight);
+  }
+
+  // Apply rain darkening
+  if (isRaining) {
+    currentSkyColor.lerp(skyColorRain, 0.6);
+    sunIntensity *= 0.3;
+    ambientIntensity *= 0.6;
+    scene.fog.near = 200;
+    scene.fog.far = 1500;
+  } else {
+    scene.fog.near = 1000;
+    scene.fog.far = 5000;
+  }
+
+  scene.background = currentSkyColor;
+  scene.fog.color.copy(currentSkyColor);
+  
+  sun.intensity = sunIntensity;
+  ambientLight.intensity = ambientIntensity;
+  hemi.intensity = hemiIntensity;
+
+  // 4. Rain Animation
+  if (isRaining) {
+    const positions = rainSystem.geometry.attributes.position.array;
+    for (let i = 0; i < RAIN_COUNT; i++) {
+      positions[i * 3 + 1] -= rainVelocities[i] * dt;
+      if (positions[i * 3 + 1] < 0) {
+        positions[i * 3 + 1] = 100;
+        positions[i * 3] = camera.position.x + (Math.random() - 0.5) * 200;
+        positions[i * 3 + 2] = camera.position.z + (Math.random() - 0.5) * 200;
+      }
+    }
+    rainSystem.geometry.attributes.position.needsUpdate = true;
+    rainSystem.position.x = camera.position.x;
+    rainSystem.position.z = camera.position.z;
+  }
+}
+
+// ============ ENVIRONMENT BUILDER (OPTIMIZED) ============
+function buildEnvironment(config) {
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(30000, 30000), new THREE.MeshLambertMaterial({ color: 0x4a7c3f }));
+  ground.rotation.x = -Math.PI/2; ground.position.set(1500, -0.5, 9000); ground.receiveShadow = true; scene.add(ground);
+
+  const roadMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+  const laneMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  for (let i = 0; i < 150; i++) {
+    const t1 = i / 150; const t2 = (i+1) / 150;
+    const p1 = curve.getPointAt(t1); const p2 = curve.getPointAt(t2);
+    const dist = p1.distanceTo(p2); const mid = p1.clone().lerp(p2, 0.5);
+    const tan = curve.getTangentAt(t1); const yaw = Math.atan2(tan.x, tan.z);
+    
+    const road = new THREE.Mesh(new THREE.BoxGeometry(60, 0.1, dist + 2), roadMat);
+    road.position.set(mid.x, 0.05, mid.z); road.rotation.y = yaw; road.receiveShadow = true; scene.add(road);
+
+    if (i % 2 === 0) {
+      const right = new THREE.Vector3(tan.z, 0, -tan.x);
+      for (const offset of [-9, 0, 9]) {
+        const lane = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 4), laneMat);
+        lane.position.copy(mid).addScaledVector(right, offset); lane.position.y = 0.06; lane.rotation.y = yaw; scene.add(lane);
+      }
+    }
+  }
+
+  const up = new THREE.Vector3(0, 1, 0);
+  const numSamples = 250; 
+  const railOffset = 0.8; 
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xbbbbbb, metalness: 0.7, roughness: 0.4 });
+  const viaductMat = new THREE.MeshLambertMaterial({ color: 0x999999 });
+  const tunnelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+
+  for (let side of [-1, 1]) {
+    const leftRailPts = []; const rightRailPts = []; const sleeperData = [];
+    for (let i = 0; i <= numSamples; i++) {
+      const t = i / numSamples; const p = getTrackPos(t, TRACK_OFFSET * side); 
+      const tan = curve.getTangentAt(t); const right = new THREE.Vector3().crossVectors(up, tan).normalize();
+      leftRailPts.push(new THREE.Vector3().copy(p).addScaledVector(right, -railOffset));
+      rightRailPts.push(new THREE.Vector3().copy(p).addScaledVector(right, railOffset));
+      if (i % 2 === 0) sleeperData.push({ p, tan, right });
+    }
+
+    const railCurveL = new THREE.CatmullRomCurve3(leftRailPts); const railCurveR = new THREE.CatmullRomCurve3(rightRailPts);
+    const railGeoL = new THREE.TubeGeometry(railCurveL, numSamples, 0.1, 4, false); 
+    const railGeoR = new THREE.TubeGeometry(railCurveR, numSamples, 0.1, 4, false);
+    const railMeshL = new THREE.Mesh(railGeoL, railMat); const railMeshR = new THREE.Mesh(railGeoR, railMat);
+    railMeshL.castShadow = true; railMeshR.castShadow = true; scene.add(railMeshL, railMeshR);
+
+    const sleeperGeo = new THREE.BoxGeometry(2.6, 0.15, 0.5); const sleeperMat = new THREE.MeshLambertMaterial({ color: 0x5b3a1e });
+    const sleeperMesh = new THREE.InstancedMesh(sleeperGeo, sleeperMat, sleeperData.length);
+    const dummy = new THREE.Object3D();
+    sleeperData.forEach((data, idx) => {
+      dummy.position.copy(data.p); dummy.position.y -= 0.15; dummy.lookAt(new THREE.Vector3().copy(data.p).add(data.tan));
+      dummy.updateMatrix(); sleeperMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(sleeperMesh);
+
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / numSamples; const p = curve.getPointAt(t); const tan = curve.getTangentAt(t);
+      const yaw = Math.atan2(tan.x, tan.z); const pitch = Math.atan2(tan.y, Math.sqrt(tan.x*tan.x + tan.z*tan.z));
+
+      if (i % 2 === 0) { 
+        const bed = new THREE.Mesh(new THREE.BoxGeometry(15, 0.8, 15), viaductMat); 
+        bed.position.set(p.x, p.y - 0.4, p.z); bed.rotation.set(pitch, yaw, 0, 'YXZ'); bed.receiveShadow = true; bed.castShadow = true; scene.add(bed);
+      }
+
+      if (p.y > 4 && i % 5 === 0) {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(3, p.y - 0.8, 3), viaductMat);
+        pillar.position.set(p.x, (p.y - 0.8)/2, p.z); pillar.castShadow = true; scene.add(pillar);
+      }
+    }
+  }
+
+  for (let i = 0; i < 120; i++) {
+    const t = i / 120; const p = curve.getPointAt(t); const tan = curve.getTangentAt(t);
+    const right = new THREE.Vector3(tan.z, 0, -tan.x); const yaw = Math.atan2(tan.x, tan.z);
+    for (const side of [1, -1]) {
+      const dist = 65 + Math.random() * 40;
+      createMalaysianBuilding(p.x + right.x * dist * side + (Math.random()-0.5)*20, p.z + right.z * dist * side + (Math.random()-0.5)*20, 0, yaw);
+    }
+  }
+
+  vehicles = [];
+  for (let i = 0; i < 40; i++) {
+    const typeRand = Math.random(); const type = typeRand > 0.85 ? 'lorry' : (typeRand > 0.75 ? 'bus' : 'car');
+    const color = [0xff0000, 0x0000ff, 0xffffff, 0x111111, 0xcccccc, 0xffff00][(Math.random()*6)|0];
+    const mesh = createVehicle(type, color); scene.add(mesh);
+    const dir = Math.random() > 0.5 ? 1 : -1;
+    const lane = dir > 0 ? (Math.random() > 0.5 ? -20 : -14) : (Math.random() > 0.5 ? 14 : 20);
+    vehicles.push({ mesh, t: Math.random(), speed: (0.015 + Math.random() * 0.02), dir, lane });
+  }
+
+  groundNPCs = [];
+  for (let i = 0; i < 30; i++) {
+    const t = Math.random(); const p = curve.getPointAt(t); const tan = curve.getTangentAt(t);
+    const right = new THREE.Vector3(tan.z, 0, -tan.x); const dist = 32 + Math.random() * 4; const side = Math.random() < 0.5 ? 1 : -1;
+    const npc = makeNPC(NPC_COLORS[(Math.random()*NPC_COLORS.length)|0]);
+    npc.position.set(p.x + right.x * dist * side, 0, p.z + right.z * dist * side); scene.add(npc);
+    groundNPCs.push({ mesh: npc, t, side, speed: (Math.random()*0.01 + 0.005) * (Math.random()<0.5?1:-1), lane: dist });
+  }
+
+  stationGroups = [];
+  for (let i = 0; i < N; i++) {
+    const t = STATION_T[i]; const p = curve.getPointAt(t);
+    const tan = curve.getTangentAt(t); const yaw = Math.atan2(tan.x, tan.z);
+    const right = new THREE.Vector3(tan.z, 0, -tan.x);
+    const group = new THREE.Group(); group.position.copy(p); group.rotation.y = yaw; scene.add(group);
+
+    const isInter = STATIONS[i].type === "interchange"; const isUnder = STATIONS[i].type === "underground";
+    const themeColor = isInter ? '#ffcc00' : config.colorHex;
+
+    const platform = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 65), new THREE.MeshLambertMaterial({ color: 0xdedede }));
+    platform.position.set(0, 0.6, 0); platform.receiveShadow = true; group.add(platform);
+
+    const edge1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 65), new THREE.MeshLambertMaterial({ color: 0xffcc00 }));
+    edge1.position.set(-2.75, 1.25, 0); group.add(edge1);
+    const edge2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 65), new THREE.MeshLambertMaterial({ color: 0xffcc00 }));
+    edge2.position.set(2.75, 1.25, 0); group.add(edge2);
+
+    const roof = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 65, 16, 1, false, 0, Math.PI), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
+    roof.rotation.z = Math.PI / 2; roof.rotation.y = Math.PI / 2; roof.position.set(0, 8, 0); roof.scale.set(1, 1, 0.6); group.add(roof);
+
+    const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(12, 3), new THREE.MeshBasicMaterial({ map: makeSignTexture(STATIONS[i].name, themeColor), side: THREE.DoubleSide }));
+    signMesh.position.set(0, 6, 0); signMesh.rotation.y = -Math.PI / 2; group.add(signMesh);
+
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(4, 2), new THREE.MeshBasicMaterial({ map: makeBoardTexture("MENUNGGU"), side: THREE.DoubleSide }));
+    board.position.set(0, 3, 10); board.rotation.y = -Math.PI / 2; group.add(board);
+
+    if (!isUnder) {
+      const stairs = new THREE.Mesh(new THREE.BoxGeometry(4, 12, 8), new THREE.MeshLambertMaterial({color: 0x888888}));
+      stairs.position.set(0, -6, 15); stairs.rotation.x = -Math.PI / 6; group.add(stairs);
+    }
+
+    stationGroups.push({ group, point: p, tangent: tan, right, yaw, platformPos: p.clone(), platformY: p.y + 1.2, board: board });
+  }
+}
+
+// ============ TRAIN BUILDER ============
+let CARRIAGE_LEN = 12; let CARRIAGE_GAP = 1.5; let CARRIAGE_T_OFFSET; let carriages = [];
+
+function buildTrains(config) {
+  CARRIAGE_T_OFFSET = (CARRIAGE_LEN + CARRIAGE_GAP) / CURVE_LEN;
+  
+  playerTrainObj = createTrain(true, config.numCarriages, config.colorDec);
+  carriages = playerTrainObj.carriages;
+
+  aiTrains = [];
+  for (let i = 0; i < 4; i++) spawnAITrain(0.1 + (i * 0.2), 1, config.numCarriages, config.colorDec); 
+  for (let i = 0; i < 5; i++) spawnAITrain(0.05 + (i * 0.18), -1, config.numCarriages, config.colorDec); 
+}
+
+function spawnAITrain(startT, initialDir, numCarriages, colorDec) {
+  const obj = createTrain(false, numCarriages, colorDec);
+  let targetIdx, trackOffset;
+  if (initialDir === 1) { targetIdx = Math.floor(startT * (N - 1)) + 1; trackOffset = -TRACK_OFFSET; } 
+  else { targetIdx = Math.floor(startT * (N - 1)) - 1; trackOffset = TRACK_OFFSET; }
+  if (targetIdx >= N) targetIdx = N - 1; if (targetIdx < 0) targetIdx = 0;
+
+  aiTrains.push({ group: obj.group, carriages: obj.carriages, t: startT, speed: 0, state: 'moving', targetStationIdx: targetIdx, dir: initialDir, trackOffset: trackOffset, dockedTimer: 0 });
+}
+
+function createTrain(isPlayer = false, numCarriages = 4, colorDec = 0x00A650) {
+  const trainGroup = new THREE.Group(); scene.add(trainGroup);
+  const cars = [];
+  
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0xeaeaea });
+  const winMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
+  const accentMat = new THREE.MeshLambertMaterial({ color: colorDec });
+  const doorMat = new THREE.MeshLambertMaterial({ color: colorDec });
+  const wheelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  const trainBodyGeo = new THREE.BoxGeometry(3.2, 3.2, CARRIAGE_LEN);
+  const trainStripeGeo = new THREE.BoxGeometry(3.25, 0.55, CARRIAGE_LEN);
+  const trainWinGeo = new THREE.BoxGeometry(0.06, 1.05, 3.0);
+  const trainDoorGeo = new THREE.BoxGeometry(0.12, 2.4, 2.0);
+  const trainWheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 12);
+  const trainNoseGeo = new THREE.BoxGeometry(3.0, 2.2, 1.8);
+  const trainNoseTopGeo = new THREE.BoxGeometry(2.8, 0.8, 1.5);
+  const trainWsGeo = new THREE.BoxGeometry(2.6, 1.3, 0.1);
+  const trainLedGeo = new THREE.BoxGeometry(0.6, 0.2, 0.1);
+
+  for (let i = 0; i < numCarriages; i++) {
+    const group = new THREE.Group(); trainGroup.add(group);
+    const body = new THREE.Mesh(trainBodyGeo, bodyMat); body.position.y = 2.6; body.castShadow = true; group.add(body);
+    const stripe = new THREE.Mesh(trainStripeGeo, accentMat); stripe.position.y = 2.05; group.add(stripe);
+
+    for (const side of [-1, 1]) {
+      for (let w = -1; w <= 1; w++) {
+        const win = new THREE.Mesh(trainWinGeo, winMat); win.position.set(side*1.62, 3.2, w*3.5); group.add(win);
+      }
+    }
+
+    if (i === 0) {
+      const nose = new THREE.Mesh(trainNoseGeo, accentMat); nose.position.set(0, 2.0, CARRIAGE_LEN/2 + 0.9); nose.rotation.x = -0.25; nose.castShadow = true; group.add(nose);
+      const noseTop = new THREE.Mesh(trainNoseTopGeo, bodyMat); noseTop.position.set(0, 3.1, CARRIAGE_LEN/2 + 0.7); noseTop.rotation.x = -0.3; group.add(noseTop);
+      const ws = new THREE.Mesh(trainWsGeo, winMat); ws.position.set(0, 3.2, CARRIAGE_LEN/2 + 1.05); ws.rotation.x = -0.15; group.add(ws);
+      for (const x of [-1, 1]) {
+        const led = new THREE.Mesh(trainLedGeo, ledMat); led.position.set(x * 1.0, 1.4, CARRIAGE_LEN/2 + 1.6); led.rotation.z = x * 0.15; group.add(led);
+      }
+      const headlight = new THREE.SpotLight(0xffffff, 3, 200, Math.PI / 6, 0.4, 1.5);
+      headlight.position.set(0, 2.0, CARRIAGE_LEN/2 + 1); headlight.target.position.set(0, 0, 100);
+      group.add(headlight); group.add(headlight.target);
+    }
+    
+    if (i === numCarriages - 1) {
+      const tail = new THREE.Mesh(trainNoseGeo, accentMat); tail.position.set(0, 2.0, -CARRIAGE_LEN/2 - 0.9); tail.rotation.x = 0.25; group.add(tail);
+      const taillight = new THREE.PointLight(0xff0000, 2, 30); taillight.position.set(0, 1.5, -CARRIAGE_LEN/2 - 1.5); group.add(taillight);
+    }
+
+    for (const z of [-CARRIAGE_LEN/2 + 2, CARRIAGE_LEN/2 - 2]) {
+      for (const x of [-1.2, 1.2]) {
+        const wheel = new THREE.Mesh(trainWheelGeo, wheelMat); wheel.rotation.z = Math.PI/2; wheel.position.set(x, 0.3, z); group.add(wheel);
+      }
+    }
+
+    const doorL = new THREE.Mesh(trainDoorGeo, doorMat); const doorR = new THREE.Mesh(trainDoorGeo, doorMat);
+    doorL.position.set(-1.66, 2.4, -1.0); doorR.position.set(-1.66, 2.4, 1.0); group.add(doorL, doorR);
+    const doorL2 = new THREE.Mesh(trainDoorGeo, doorMat); const doorR2 = new THREE.Mesh(trainDoorGeo, doorMat);
+    doorL2.position.set(1.66, 2.4, -1.0); doorR2.position.set(1.66, 2.4, 1.0); group.add(doorL2, doorR2);
+
+    cars.push({ group, doorL, doorR, doorL2, doorR2 });
+  }
+  return { group: trainGroup, carriages: cars };
+}
+
+// ============ INTERCHANGE TRAIN BUILDER ============
+function spawnInterchangeTrain(stationIdx) {
+  const st = STATIONS[stationIdx];
+  if (!st.inter || st.inter === "") return;
+
+  let color = 0xffffff;
+  let isMonorail = false;
+  
+  if (st.inter.includes("KTM")) color = 0x0000aa; 
+  else if (st.inter.includes("LRT")) color = 0xff0000; 
+  else if (st.inter.includes("Monorail")) { color = 0xdddddd; isMonorail = true; }
+  else if (st.inter.includes("MRT")) color = 0xffcc00; 
+
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(3, 2.5, isMonorail ? 8 : 18), new THREE.MeshLambertMaterial({ color }));
+  body.position.y = 2.2; body.castShadow = true;
+  group.add(body);
+
+  if (isMonorail) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 30), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
+    beam.position.y = 0.5;
+    group.add(beam);
+  }
+
+  const t = STATION_T[stationIdx];
+  const startT = Math.max(0, t - 0.04);
+  const speed = 0.015;
+  
+  const p = getTrackPos(startT, -25); 
+  group.position.copy(p);
+  
+  scene.add(group);
+  interchangeVehicles.push({ group, t: startT, speed: speed, offset: -25 });
+}
+
+// ============ UTILS & HELPERS ============
+const NPC_COLORS = [0xE57373,0x64B5F6,0xFFB74D,0x81C784,0xBA68C8,0xFFF176,0x4DB6AC,0xFF8A65,0xF06292];
+
+function getTrackPos(t, offset) {
+  const p = curve.getPointAt(t); const tan = curve.getTangentAt(t);
+  const right = new THREE.Vector3(tan.z, 0, -tan.x).normalize();
+  return p.clone().addScaledVector(right, offset);
+}
+
+function makeNPC(color) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.6,1.2,0.4), new THREE.MeshLambertMaterial({ color })); body.position.y = 1.3; body.castShadow = true; g.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.45), new THREE.MeshLambertMaterial({ color: 0xFFCC99 })); head.position.y = 2.15; head.castShadow = true; g.add(head);
+  return g;
+}
+
+function createMalaysianBuilding(x, z, yBase, yaw) {
+  const type = Math.random();
+  if (type > 0.6) {
+    const w = 12 + Math.random() * 10; const d = 12 + Math.random() * 10; const h = 30 + Math.random() * 40;
+    const color = [0xffcc80, 0x90caf9, 0xf8bbd0, 0xd4c5a9][(Math.random()*4)|0];
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color }));
+    mesh.position.set(x, yBase + h/2, z); mesh.rotation.y = yaw + (Math.random()-0.5)*0.2; mesh.castShadow = true; scene.add(mesh);
+    const winMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    for (let y = 3; y < h; y += 4) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 1, d + 0.2), winMat);
+      strip.position.set(x, yBase + y, z); strip.rotation.y = yaw + (Math.random()-0.5)*0.2; scene.add(strip);
+    }
+  } else {
+    const w = 10 + Math.random() * 6; const d = 20 + Math.random() * 10; const h = 8 + Math.random() * 6;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xeceff1 }));
+    mesh.position.set(x, yBase + h/2, z); mesh.rotation.y = yaw; mesh.castShadow = true; scene.add(mesh);
+    const awning = new THREE.Mesh(new THREE.BoxGeometry(w + 2, 0.5, d + 2), new THREE.MeshLambertMaterial({ color: [0xffcc00, 0xff0000, 0x00ff00][(Math.random()*3)|0] }));
+    awning.position.set(x, yBase + 3.5, z); awning.rotation.y = yaw; scene.add(awning);
+  }
+}
+
+function createVehicle(type, color) {
+  const g = new THREE.Group();
+  let bodyW = 2, bodyH = 1.2, bodyD = 4;
+  if (type === 'lorry') { bodyW = 2.4; bodyH = 2.8; bodyD = 8; } else if (type === 'bus') { bodyW = 2.4; bodyH = 2.6; bodyD = 10; }
+  const bodyMat = new THREE.MeshLambertMaterial({ color });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(bodyW, bodyH, bodyD), bodyMat); body.position.y = bodyH/2 + 0.3; body.castShadow = true; g.add(body);
+  const winMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  const win = new THREE.Mesh(new THREE.BoxGeometry(bodyW*0.9, bodyH*0.4, bodyD*0.6), winMat); win.position.y = bodyH * 0.8 + 0.3; g.add(win);
+  const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 8);
+  const wheelZ = bodyD/2 - 1;
+  for (const x of [-bodyW/2, bodyW/2]) {
+    for (const z of [-wheelZ, wheelZ]) {
+      const w = new THREE.Mesh(wheelGeo, wheelMat); w.rotation.z = Math.PI/2; w.position.set(x, 0.4, z); g.add(w);
+    }
+  }
+  return g;
+}
+
+function makeSignTexture(text, colorHex) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128;
+  const ctx = c.getContext('2d'); ctx.fillStyle = colorHex; ctx.fillRect(0,0,512,128);
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold ' + (text.length > 20 ? 26 : text.length > 14 ? 34 : 42) + 'px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text.toUpperCase(), 256, 72);
+  return new THREE.CanvasTexture(c);
+}
+
+function makeBoardTexture(statusText) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#000000'; ctx.fillRect(0,0,512,256);
+  ctx.strokeStyle = '#333333'; ctx.lineWidth = 10; ctx.strokeRect(0,0,512,256);
+  ctx.fillStyle = '#ffcc00'; ctx.font = 'bold 36px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText("MRT MALAYSIA", 256, 50);
+  ctx.fillStyle = '#00ff00'; ctx.font = 'bold 48px monospace'; ctx.fillText(statusText, 256, 140);
+  ctx.fillStyle = '#ffffff'; ctx.font = '24px monospace'; ctx.fillText("Rapid KL", 256, 210);
+  return new THREE.CanvasTexture(c);
+}
+
+// ============ COCKPIT ============
+let cockpitGroup;
+function setupCockpit() {
+  cockpitGroup = new THREE.Group(); cockpitGroup.visible = false; camera.add(cockpitGroup); scene.add(camera); 
+  const dashMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); const frameMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  const dash = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.2, 1.5), dashMat); dash.position.set(0, -1.2, -1.8); cockpitGroup.add(dash);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.4), new THREE.MeshBasicMaterial({color: 0x00ffcc})); screen.position.set(-0.6, -0.7, -1.04); cockpitGroup.add(screen);
+  const lever = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8), new THREE.MeshLambertMaterial({color: 0x555555})); lever.rotation.x = Math.PI / 4; lever.position.set(0.6, -0.6, -1.6); cockpitGroup.add(lever);
+  const frameTop = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.2), frameMat); frameTop.position.set(0, 0.9, -1.8); cockpitGroup.add(frameTop);
+  const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.2), frameMat); frameBottom.position.set(0, -0.6, -1.8); cockpitGroup.add(frameBottom);
+  const frameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 0.2), frameMat); frameLeft.position.set(-1.55, 0.15, -1.8); cockpitGroup.add(frameLeft);
+  const frameRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 0.2), frameMat); frameRight.position.set(1.55, 0.15, -1.8); cockpitGroup.add(frameRight);
+  const mirrorMat = new THREE.MeshLambertMaterial({ color: 0x88ccff });
+  const mirrorL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.1), mirrorMat); mirrorL.position.set(-1.8, -0.1, -1.9); cockpitGroup.add(mirrorL);
+  const mirrorR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.1), mirrorMat); mirrorR.position.set(1.8, -0.1, -1.9); cockpitGroup.add(mirrorR);
+}
+
+// ============ AUDIO ============
+let audioCtx;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playDoorSound(isOpening) {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const notes = isOpening ? [659.25, 523.25, 587.33, 392.00] : [392.00, 587.33, 523.25, 659.25];
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.value = freq;
+    const startTime = now + (i * 0.25); gain.gain.setValueAtTime(0, startTime); gain.gain.linearRampToValueAtTime(0.15, startTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(startTime); osc.stop(startTime + 0.4);
+  });
+  const bufferSize = audioCtx.sampleRate * 1.0;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(isOpening ? 500 : 700, now); filter.frequency.exponentialRampToValueAtTime(100, now + 0.8);
+  const noiseGain = audioCtx.createGain(); const mechStart = now + 1.0; noiseGain.gain.setValueAtTime(0, mechStart); noiseGain.gain.linearRampToValueAtTime(0.2, mechStart + 0.1); noiseGain.gain.exponentialRampToValueAtTime(0.01, mechStart + 0.6);
+  noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(audioCtx.destination); noise.start(mechStart); noise.stop(mechStart + 0.8);
+}
+
+// ============ STATE & CONTROLS ============
+let trainT = 0, speed = 0, state = 'docked', currentIdx = 0, nextIdx = 1, dockedTimer = 0, closingTimer = 0, doorOpen = 0;
+let MAX_SPEED = 96, ACCEL = 24, BRAKE = 30, DOCK_TIME = 15.0; 
+let autoDrive = true, passengerCount = 0, announcementInProgress = false;
+let viewMode = 0; const VIEWS = ['CHASE','CAB','SIDE','TOP'];
+const keys = {};
+let randomAnnouncementTimer = 0;
+
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'KeyT') { autoDrive = !autoDrive; document.getElementById('hud-mode').textContent = autoDrive ? TEXTS[selectedLanguage].hudModeAuto : TEXTS[selectedLanguage].hudModeManual; }
+  if (e.code === 'KeyC') { viewMode = (viewMode + 1) % VIEWS.length; document.getElementById('hud-view').textContent = TEXTS[selectedLanguage].hudView + VIEWS[viewMode] + ' · C'; cockpitGroup.visible = (VIEWS[viewMode] === 'CAB'); }
+  if (e.code === 'Space' && state === 'docked') dockedTimer = Math.min(dockedTimer, 0.3);
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// ============ VOICE & ANNOUNCEMENTS ============
+function speak(text) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  if (selectedLanguage === 'ms') {
+    u.lang = 'ms-MY'; u.rate = 0.82; u.pitch = 1.0;
+    const voices = speechSynthesis.getVoices(); let v = voices.find(x => x.lang.toLowerCase() === 'ms-my') || voices.find(x => x.lang.toLowerCase() === 'id-id'); if (v) u.voice = v;
+  } else {
+    u.lang = 'en-MY'; u.rate = 0.85; u.pitch = 1.0;
+    const voices = speechSynthesis.getVoices(); let v = voices.find(x => x.lang.toLowerCase() === 'en-my') || voices.find(x => x.lang.toLowerCase() === 'en-gb') || voices.find(x => x.lang.toLowerCase() === 'en-us'); if (v) u.voice = v;
+  }
+  announcementInProgress = true; u.onend = () => { announcementInProgress = false; }; u.onerror = () => { announcementInProgress = false; }; speechSynthesis.speak(u);
+}
+
+function announceNextStation(station) { let text = TEXTS[selectedLanguage].nextStation(station.name, station.inter); document.getElementById('announce-bm').textContent = text; speak(text); }
+function announceArrival(station, idx) { 
+  speechSynthesis.cancel();
+  document.getElementById('announce-bm').textContent = ""; 
+  setTimeout(() => {
+    let text = TEXTS[selectedLanguage].arrival(station.name, station.inter); 
+    document.getElementById('announce-bm').textContent = text; 
+    speak(text); 
+  }, 150);
+}
+function announceDoors() { let text = TEXTS[selectedLanguage].doorsClosing; document.getElementById('announce-bm').textContent = text; speak(text); }
+
+function triggerRandomAnnouncement() {
+  const isNoEating = Math.random() < 0.4;
+  let text = "";
+  if (isNoEating) {
+    text = TEXTS[selectedLanguage].noEating;
+  } else {
+    const list = TEXTS[selectedLanguage].newsList;
+    text = list[Math.floor(Math.random() * list.length)];
+  }
+  document.getElementById('announce-bm').textContent = text;
+  speak(text);
+  randomAnnouncementTimer = 20.0 + Math.random() * 20.0; 
+}
+
+// ============ NPC SPAWNING & BOARDING ============
+function spawnWaitingForStation(stationIdx) {
+  for (let i = npcWaiting.length - 1; i >= 0; i--) { if (npcWaiting[i].stationIdx === stationIdx) { scene.remove(npcWaiting[i].mesh); npcWaiting.splice(i, 1); } }
+  if (stationIdx >= N - 1) return;
+  const st = stationGroups[stationIdx]; const n = 4 + ((Math.random()*4)|0);
+  for (let i = 0; i < n; i++) {
+    const npc = makeNPC(NPC_COLORS[(Math.random()*NPC_COLORS.length)|0]);
+    const along = (Math.random() - 0.5) * 20; const lat = 2.0 + Math.random() * 1.5;
+    const rx = st.right.x * lat + st.platformPos.x; const rz = st.right.z * lat + st.platformPos.z;
+    npc.position.set(rx, st.platformY + 1.3, rz); npc.rotation.y = st.yaw + Math.PI; scene.add(npc);
+    const dest = stationIdx + 1 + ((Math.random() * (N - 1 - stationIdx)) | 0);
+    npcWaiting.push({ mesh: npc, stationIdx, dest, action: 'wait', yBase: st.platformY + 1.3 });
+  }
+}
+function makeBoarding() {
+  let count = 0; const midT = Math.max(0, trainT - (ROUTES[selectedRoute].numCarriages/2) * CARRIAGE_T_OFFSET);
+  const tp = getTrackPos(midT, -TRACK_OFFSET); const tan = curve.getTangentAt(midT); const right = new THREE.Vector3(tan.z, 0, -tan.x);
+  const doorPos = tp.clone().addScaledVector(right, 2.0); doorPos.y += 1.3;
+  for (let i = npcWaiting.length - 1; i >= 0 && count < 5; i--) {
+    const n = npcWaiting[i];
+    if (n.stationIdx === currentIdx && n.action === 'wait') { n.action = 'board'; n.target = doorPos; count++; }
+  }
+}
+function spawnExiters() {
+  for (let i = riders.length - 1; i >= 0; i--) {
+    if (riders[i].destIndex === currentIdx) {
+      const st = stationGroups[currentIdx]; const npc = makeNPC(NPC_COLORS[(Math.random()*NPC_COLORS.length)|0]);
+      npc.position.copy(st.platformPos).addScaledVector(st.tangent, (Math.random()-0.5)*6); npc.position.y = st.platformY + 1.3; scene.add(npc);
+      const target = st.platformPos.clone().addScaledVector(st.right, 2).addScaledVector(st.tangent, (Math.random()-0.5)*20); target.y = st.platformY + 1.3;
+      npcWaiting.push({ mesh: npc, stationIdx: currentIdx, action: 'exit', target: target }); riders.splice(i, 1); passengerCount = Math.max(0, passengerCount - 1);
+    }
+  }
+}
+
+// ============ MAIN LOOP ============
+function update(dt) {
+  updateWeatherAndTime(dt);
+
+  if (state === 'docked') {
+    dockedTimer -= dt;
+    if (dockedTimer <= 0 && !announcementInProgress) { state = 'closing'; closingTimer = 1.8; announceDoors(); playDoorSound(false); }
+  } else if (state === 'closing') {
+    closingTimer -= dt;
+    if (closingTimer <= 0 && !announcementInProgress) {
+      if (currentIdx >= N - 1) { state = 'terminated'; }
+      else {
+        nextIdx = currentIdx + 1; state = 'moving';
+        let nextText = TEXTS[selectedLanguage].nextStation(STATIONS[nextIdx].name, STATIONS[nextIdx].inter);
+        document.getElementById('announce-bm').textContent = nextText; setTimeout(() => speak(nextText), 1000);
+        randomAnnouncementTimer = 15.0; 
+      }
+    }
+  } else if (state === 'moving') {
+    const targetT = STATION_T[nextIdx] + (ROUTES[selectedRoute].numCarriages/2) * CARRIAGE_T_OFFSET;
+    const distAlong = (targetT - trainT) * CURVE_LEN;
+    
+    if (autoDrive) {
+      const stopDist = (speed * speed) / (2 * BRAKE) + 5; 
+      if (distAlong <= stopDist && speed > 0) {
+         speed = Math.max(0, speed - BRAKE * dt);
+      } else {
+         speed = Math.min(MAX_SPEED, speed + ACCEL * dt);
+      }
+    } else {
+      if (keys['KeyW'] || keys['ArrowUp']) speed = Math.min(MAX_SPEED, speed + ACCEL*dt);
+      else if (keys['KeyS'] || keys['ArrowDown']) speed = Math.max(0, speed - BRAKE*dt);
+      else speed = Math.max(0, speed - 5*dt);
+    }
+    
+    trainT = Math.min(1.05, trainT + (speed * dt) / CURVE_LEN);
+    
+    if (distAlong <= 2 && speed < 2) { 
+      trainT = targetT; 
+      speed = 0; 
+      startDocking(); 
+    }
+
+    if (!announcementInProgress && distAlong > 300) {
+      randomAnnouncementTimer -= dt;
+      if (randomAnnouncementTimer <= 0) {
+        triggerRandomAnnouncement();
+      }
+    }
+  }
+
+  const TRAIN_LEN = ROUTES[selectedRoute].numCarriages * (CARRIAGE_LEN + CARRIAGE_GAP);
+  const SAFE_GAP = 20; 
+  const MIN_DIST = TRAIN_LEN + SAFE_GAP; 
+
+  aiTrains.forEach((ai, aiIndex) => {
+    if (ai.state === 'docked') {
+      ai.dockedTimer -= dt;
+      if (ai.dockedTimer <= 0) {
+        ai.state = 'moving'; ai.targetStationIdx += ai.dir;
+        if (ai.targetStationIdx >= N) { ai.dir = -1; ai.trackOffset = TRACK_OFFSET; ai.targetStationIdx = N - 2; } 
+        else if (ai.targetStationIdx < 0) { ai.dir = 1; ai.trackOffset = -TRACK_OFFSET; ai.targetStationIdx = 1; }
+      }
+    } else if (ai.state === 'moving') {
+      const targetT = STATION_T[ai.targetStationIdx] + (ai.dir === 1 ? (ROUTES[selectedRoute].numCarriages/2) * CARRIAGE_T_OFFSET : -(ROUTES[selectedRoute].numCarriages/2) * CARRIAGE_T_OFFSET);
+      
+      let distToStation = Math.abs((targetT - ai.t) * CURVE_LEN);
+      let closestTrainDist = 999999;
+      
+      if (ai.trackOffset === -TRACK_OFFSET && ai.dir === 1) {
+        if (trainT > ai.t) { 
+          let d = (trainT - ai.t) * CURVE_LEN;
+          closestTrainDist = Math.max(0, d - MIN_DIST); 
+        }
+      }
+      
+      aiTrains.forEach((otherAi, otherIndex) => {
+        if (aiIndex === otherIndex || ai.trackOffset !== otherAi.trackOffset) return;
+        let d = 999999;
+        if (ai.dir === 1 && otherAi.t > ai.t) d = (otherAi.t - ai.t) * CURVE_LEN;
+        else if (ai.dir === -1 && otherAi.t < ai.t) d = (ai.t - otherAi.t) * CURVE_LEN;
+        
+        if (d < 999999) closestTrainDist = Math.min(closestTrainDist, Math.max(0, d - MIN_DIST));
+      });
+
+      const effectiveDist = Math.min(distToStation, closestTrainDist);
+      const aiStopDist = (ai.speed * ai.speed) / (2 * BRAKE) + 15;
+      const AI_MAX_SPEED = MAX_SPEED * 0.85; 
+
+      if (effectiveDist <= aiStopDist && ai.speed > 0) {
+        ai.speed = Math.max(0, ai.speed - BRAKE * dt);
+      } else if (effectiveDist > aiStopDist) {
+        ai.speed = Math.min(AI_MAX_SPEED, ai.speed + ACCEL * dt);
+      }
+      
+      if (effectiveDist <= 5 && ai.speed < 5) ai.speed = 0;
+      ai.t += (ai.speed * dt / CURVE_LEN) * ai.dir;
+      
+      if (distToStation <= 5 && ai.speed < 5) { 
+        ai.t = targetT; ai.speed = 0; ai.state = 'docked'; ai.dockedTimer = 10.0 + Math.random() * 5.0; 
+      }
+    }
+    
+    for (let c = 0; c < ai.carriages.length; c++) {
+      let t = ai.t - c * CARRIAGE_T_OFFSET * ai.dir; t = Math.max(0, Math.min(1, t));
+      const p = getTrackPos(t, ai.trackOffset); const cTan = curve.getTangentAt(t);
+      ai.carriages[c].group.position.copy(p);
+      ai.carriages[c].group.rotation.set(-Math.atan2(cTan.y, Math.sqrt(cTan.x*cTan.x + cTan.z*cTan.z)), Math.atan2(cTan.x, cTan.z) + (ai.dir === 1 ? 0 : Math.PI), 0, 'YXZ');
+      const aiDoorTarget = (ai.state === 'docked') ? 1 : 0; const aiDoorOpen = aiDoorTarget * 1.05;
+      ai.carriages[c].doorL.position.z = -1.0 - aiDoorOpen; ai.carriages[c].doorR.position.z = 1.0 + aiDoorOpen;
+      ai.carriages[c].doorL2.position.z = -1.0 - aiDoorOpen; ai.carriages[c].doorR2.position.z = 1.0 + aiDoorOpen;
+    }
+  });
+
+  const tan = curve.getTangentAt(Math.max(0, Math.min(1, trainT)));
+  for (let c = 0; c < carriages.length; c++) {
+    let t = trainT - c * CARRIAGE_T_OFFSET; t = Math.max(0, Math.min(1, t));
+    const p = getTrackPos(t, -TRACK_OFFSET); const cTan = curve.getTangentAt(t);
+    carriages[c].group.position.copy(p);
+    carriages[c].group.rotation.set(-Math.atan2(cTan.y, Math.sqrt(cTan.x*cTan.x + cTan.z*cTan.z)), Math.atan2(cTan.x, cTan.z), 0, 'YXZ');
+    const doorTarget = (state === 'docked') ? 1 : 0;
+    doorOpen += (doorTarget - doorOpen) * Math.min(1, dt * 5);
+    carriages[c].doorL.position.z = -1.0 - (doorOpen * 1.05); carriages[c].doorR.position.z = 1.0 + (doorOpen * 1.05);
+    carriages[c].doorL2.position.z = -1.0 - (doorOpen * 1.05); carriages[c].doorR2.position.z = 1.0 + (doorOpen * 1.05);
+  }
+
+  interchangeVehicles.forEach((v, index) => {
+    v.t += v.speed * dt;
+    if (v.t > 1) {
+        scene.remove(v.group);
+        interchangeVehicles.splice(index, 1);
+        return;
+    }
+    const p = getTrackPos(v.t, v.offset);
+    const tan = curve.getTangentAt(v.t);
+    v.group.position.copy(p);
+    v.group.rotation.set(-Math.atan2(tan.y, Math.sqrt(tan.x*tan.x + tan.z*tan.z)), Math.atan2(tan.x, tan.z), 0, 'YXZ');
+  });
+
+  vehicles.forEach(v => {
+    v.t += v.speed * v.dir * dt;
+    if (v.t > 1) v.t = 0; if (v.t < 0) v.t = 1;
+    const p = curve.getPointAt(v.t); const tan = curve.getTangentAt(v.t); const right = new THREE.Vector3(tan.z, 0, -tan.x);
+    v.mesh.position.copy(p).addScaledVector(right, v.lane); v.mesh.position.y = 0.1;
+    v.mesh.rotation.y = Math.atan2(tan.x, tan.z) + (v.dir > 0 ? 0 : Math.PI);
+  });
+
+  groundNPCs.forEach(n => {
+    n.t += n.speed * dt;
+    if (n.t > 1) n.t = 0; if (n.t < 0) n.t = 1;
+    const p = curve.getPointAt(n.t); const tan = curve.getTangentAt(n.t); const right = new THREE.Vector3(tan.z, 0, -tan.x);
+    n.mesh.position.copy(p).addScaledVector(right, n.lane * n.side); n.mesh.position.y = 0;
+    n.mesh.rotation.y = Math.atan2(tan.x, tan.z) + (n.speed > 0 ? 0 : Math.PI);
+  });
+
+  for (let i = npcWaiting.length - 1; i >= 0; i--) {
+    const n = npcWaiting[i];
+    if (n.action === 'wait') { n.mesh.position.y = n.yBase + Math.sin(performance.now()*0.003 + i) * 0.03; continue; }
+    if (!n.target) { npcWaiting.splice(i,1); scene.remove(n.mesh); continue; }
+    const dir = new THREE.Vector3().subVectors(n.target, n.mesh.position); dir.y = 0;
+    const d = dir.length();
+    if (d > 0.4) {
+      dir.normalize(); n.mesh.position.addScaledVector(dir, 4.5*dt);
+      n.mesh.position.y = n.target.y + Math.abs(Math.sin(performance.now()*0.012)) * 0.1;
+      n.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+    } else {
+      if (n.action === 'board') { scene.remove(n.mesh); npcWaiting.splice(i, 1); riders.push({ destIndex: n.dest }); passengerCount++; }
+      else if (n.action === 'exit') { scene.remove(n.mesh); npcWaiting.splice(i, 1); }
+    }
+  }
+
+  updateCamera(dt, tan);
+}
+
+function updateCamera(dt, tan) {
+  const midT = Math.max(0, Math.min(1, trainT - (ROUTES[selectedRoute].numCarriages/2) * CARRIAGE_T_OFFSET));
+  const trainPos = getTrackPos(midT, -TRACK_OFFSET); const rightDir = new THREE.Vector3(tan.z, 0, -tan.x); const lerpF = Math.min(1, dt * 3.5);
+  switch (VIEWS[viewMode]) {
+    case 'CHASE': {
+      const target = trainPos.clone().addScaledVector(tan, -45 - (ROUTES[selectedRoute].numCarriages * 2)).add(new THREE.Vector3(0, 15, 0));
+      camera.position.lerp(target, lerpF); camera.lookAt(trainPos.x, trainPos.y + 3, trainPos.z); break;
+    }
+    case 'CAB': {
+      const frontT = Math.max(0, Math.min(1, trainT)); const frontPos = getTrackPos(frontT, -TRACK_OFFSET); const frontTan = curve.getTangentAt(frontT);
+      camera.position.copy(frontPos); camera.position.y += 3.2; camera.lookAt(camera.position.clone().addScaledVector(frontTan, 30)); break;
+    }
+    case 'SIDE': {
+      const ang = performance.now() * 0.0004; const rot = rightDir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), ang);
+      const target = trainPos.clone().addScaledVector(rot, 40).add(new THREE.Vector3(0, 10, 0));
+      camera.position.lerp(target, lerpF); camera.lookAt(trainPos.x, trainPos.y + 2, trainPos.z); break;
+    }
+    case 'TOP': {
+      const target = trainPos.clone().add(new THREE.Vector3(0, 90, 0)).addScaledVector(tan, -15);
+      camera.position.lerp(target, lerpF); camera.lookAt(trainPos); break;
+    }
+  }
+}
+
+function startDocking() {
+  state = 'docked'; speed = 0; currentIdx = nextIdx;
+  trainT = STATION_T[currentIdx] + (ROUTES[selectedRoute].numCarriages/2) * CARRIAGE_T_OFFSET; trainT = Math.min(1, trainT);
+  dockedTimer = DOCK_TIME; announceArrival(STATIONS[currentIdx], currentIdx); playDoorSound(true); 
+  if (!stationGroups[currentIdx]._spawned) { spawnWaitingForStation(currentIdx); stationGroups[currentIdx]._spawned = true; }
+  spawnExiters(); makeBoarding(); updateHUD();
+  
+  if (STATIONS[currentIdx].inter !== "") spawnInterchangeTrain(currentIdx);
+}
+
+function updateHUD() {
+  const lang = TEXTS[selectedLanguage];
+  document.getElementById('hud-speed').textContent = Math.round(speed * 4) + ' km/j';
+  document.getElementById('hud-station').textContent = lang.hudAt + STATIONS[currentIdx].name;
+  
+  if (state === 'docked') {
+    let displayTimer = Math.ceil(dockedTimer); if (displayTimer < 0) displayTimer = 0;
+    if (dockedTimer <= 0 && announcementInProgress) document.getElementById('hud-next').textContent = lang.hudWaitAnnouncement;
+    else document.getElementById('hud-next').textContent = lang.hudDoorsOpen + displayTimer + lang.hudSeconds;
+  } else if (state === 'closing') {
+    document.getElementById('hud-next').textContent = lang.hudClosing;
+  } else if (state === 'moving' && nextIdx < N) {
+    document.getElementById('hud-next').textContent = lang.hudNext + STATIONS[nextIdx].name;
+  } else {
+    document.getElementById('hud-next').textContent = lang.hudTerminal;
+  }
+  document.getElementById('hud-passengers').textContent = lang.hudPassengers + passengerCount;
+  document.getElementById('progress-fill').style.width = (Math.max(0, Math.min(100, (trainT / (1 + (ROUTES[selectedRoute].numCarriages/2)*CARRIAGE_T_OFFSET)) * 100))) + '%';
+
+  if (lastBoardUpdateIdx !== currentIdx || lastBoardUpdateState !== state) {
+    const board = stationGroups[currentIdx].board;
+    board.material.map.dispose();
+    board.material.map = makeBoardTexture(`KE: ${STATIONS[currentIdx].name.toUpperCase()}`);
+    board.material.needsUpdate = true;
+    lastBoardUpdateIdx = currentIdx;
+    lastBoardUpdateState = state;
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.1);
+  update(dt); updateHUD();
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
